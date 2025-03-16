@@ -1,0 +1,32 @@
+
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-black mb-4">Top 10 Stock Suggestions</h1>
+
+    <!-- Stock Suggestions -->
+    <div class="bg-dark rounded-lg shadow-lg mb-8 overflow-hidden">
+        <div class="bg-gray-800 px-6 py-4">
+            <h2 class="text-xl font-semibold text-gray-300">Stock Suggestions</h2>
+        </div>
+        <div class="p-6">
+            <ul class="divide-y divide-gray-700">
+                {% for suggestion in stock_suggestions %}
+                <li class="py-4 hover:bg-gray-700 transition duration-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <strong class="text-lg font-medium text-black">{{ suggestion.name }}</strong>
+                            <span class="ml-2 text-sm {% if suggestion.action == 'Buy' %}text-green-400{% else %}text-red-400{% endif %}">
+                                {{ suggestion.action }}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-300">{{ suggestion.reason }}</div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

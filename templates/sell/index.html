@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell Stocks</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Animate.css for animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* Custom Trading Theme */
+        body {
+            background: radial-gradient(circle, #0d0d0d, #1a1a1a);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .glassmorphism {
+            background: rgba(45, 45, 45, 0.3);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(96, 239, 255, 0.5);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 30px rgba(96, 239, 255, 0.7);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .neon-border {
+            border: 1px solid rgba(96, 239, 255, 0.3);
+        }
+        .neon-border:hover {
+            border-color: rgba(96, 239, 255, 0.7);
+        }
+        .futuristic-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .futuristic-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #60efff;
+            box-shadow: 0 0 10px rgba(96, 239, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-dark">
+    {% include 'navbar/index.html' %}
+    <div class="container mx-auto p-4">
+        <h1 class="text-5xl font-bold gradient-text mb-6 animate__animated animate__fadeInDown">Sell Stocks</h1>
+
+        <!-- Flash Messages -->
+        <!-- {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 text-sm rounded-lg {{ 'bg-green-800 text-green-200' if category == 'success' else 'bg-red-800 text-red-200' }} animate__animated animate__fadeIn">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %} -->
+
+        <!-- Sell Stocks Form -->
+        <form method="POST" class="glassmorphism p-8 rounded-lg shadow-2xl hover-scale">
+            <div class="mb-6">
+                <label for="quantity" class="block text-sm font-medium text-gray-300 mb-2">Quantity to Sell:</label>
+                <input type="number" name="quantity" id="quantity" class="futuristic-input w-full px-4 py-3 rounded-lg focus:outline-none" required>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-600 glow">Sell</button>
+        </form>
+    </div>
+</body>
+</html>

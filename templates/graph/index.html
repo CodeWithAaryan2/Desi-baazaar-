@@ -1,0 +1,69 @@
+<!-- graph/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .graph-container {
+            margin-bottom: 20px;
+        }
+        canvas {
+            max-width: 800px;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Graph for {{ stock_name }}</h1>
+
+    <!-- Display graphs for all periods -->
+    {% for period in ["1d", "1w", "1m", "1y", "5y"] %}
+        <div class="graph-container">
+            <h2>{{ period }} Graph</h2>
+            <canvas id="{{ period }}-chart"></canvas>
+        </div>
+    {% endfor %}
+
+    <!-- JavaScript to Render Charts -->
+    <script>
+        // Convert Flask template data to JavaScript
+        const graphsData = JSON.parse('{{ graphs_data | tojson | safe }}');
+
+        // Render charts for each period
+        for (const period in graphsData) {
+            const ctx = document.getElementById(`${period}-chart`).getContext('2d');
+            const data = {
+                labels: graphsData[period].dates,
+                datasets: [{
+                    label: 'Price',
+                    data: graphsData[period].prices,
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            };
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const date = graphsData[period].dates[context.dataIndex];
+                                    const price = context.raw;
+                                    return `Date: ${date}, Price: ${price}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            new Chart(ctx, config);
+        }
+    </script>
+</body>
+</html>

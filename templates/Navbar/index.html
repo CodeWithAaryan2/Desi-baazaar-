@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <title>Navbar</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home')}}"><img src="/static/img/logo.png" alt="Logo"></a>
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="nav-menu" id="nav-menu">
+            <ul>
+                <li><a href="{{ url_for('home')}}">Home</a></li>
+
+                <!-- Show Dashboard link only if user is logged in -->
+                {% if 'username' in session %}
+                <li><a href="{{ url_for('dashboard')}}">Dashboard</a></li>
+                {% endif %}
+
+                <li class="nav-btn">
+                    {% if 'username' in session %}
+                    <a href="{{ url_for('logout')}}"><button>Log Out</button></a>
+                    {% else %}
+                    <a href="{{ url_for('login')}}"><button>Login</button></a>
+                    <a href="{{ url_for('signup')}}"><button>Sign Up</button></a>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+        
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('open');
+            hamburger.classList.toggle('open');
+        });
+        </script>
+        {%include 'voice/index.html'%}   
+</body>
+</html>

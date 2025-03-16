@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Chart.js for real-time data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Animate.css for animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* Custom Trading Theme */
+        body {
+            background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .glassmorphism {
+            background: rgba(45, 45, 45, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow {
+            box-shadow: 0 0 15px rgba(96, 239, 255, 0.3);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(96, 239, 255, 0.5);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .neon-border {
+            border: 1px solid rgba(96, 239, 255, 0.3);
+        }
+        .neon-border:hover {
+            border-color: rgba(96, 239, 255, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-dark">
+    {% include 'navbar/index.html' %}
+    <div class="container mx-auto p-4">
+        <!-- Header Section -->
+        <div class="text-center mb-8 md:mb-12 animate__animated animate__fadeIn">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text mb-4">Welcome, {{ session['username'] }}!</h1>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-300">Trading Dashboard</h2>
+        </div>
+
+        <!-- Portfolio Summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            <!-- Token Balance -->
+            <div class="glassmorphism p-4 sm:p-6 hover-scale">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-300 mb-2 sm:mb-4">Token Balance</h3>
+                <p class="text-2xl sm:text-3xl font-bold text-white">₹{{ tokens }}</p>
+            </div>
+            <!-- Wallet Balance -->
+            <div class="glassmorphism p-4 sm:p-6 hover-scale">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-300 mb-2 sm:mb-4">Wallet Balance</h3>
+                <p class="text-2xl sm:text-3xl font-bold text-white">₹{{ wallet_balance | round(2) }}</p>
+                <!-- Withdrawal Button -->
+                <button onclick="openWithdrawalModal()" class="mt-3 sm:mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 glow">
+                    Withdraw Funds
+                </button>
+            </div>
+            <!-- Total Profit/Loss -->
+            <div class="glassmorphism p-4 sm:p-6 hover-scale">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-300 mb-2 sm:mb-4">Total Profit/Loss</h3>
+                <p class="text-2xl sm:text-3xl font-bold {% if total_profit_loss >= 0 %}text-green-400{% else %}text-red-400{% endif %}">
+                    ₹{{ total_profit_loss | round(2) }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            <a href="{{ url_for('buy') }}" class="glassmorphism p-4 sm:p-6 text-center hover-scale neon-border">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-300 mb-2 sm:mb-4">Buy Stocks</h3>
+                <p class="text-base sm:text-lg text-white">Start Investing</p>
+            </a>
+            <a href="{{ url_for('buy_bond') }}" class="glassmorphism p-4 sm:p-6 text-center hover-scale neon-border">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-300 mb-2 sm:mb-4">Buy Bonds</h3>
+                <p class="text-base sm:text-lg text-white">Secure Your Portfolio</p>
+            </a>
+            <a href="{{ url_for('buy_insurance') }}" class="glassmorphism p-4 sm:p-6 text-center hover-scale neon-border">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-300 mb-2 sm:mb-4">Buy Insurance</h3>
+                <p class="text-base sm:text-lg text-white">Protect Your Assets</p>
+            </a>
+        </div>
+
+        <!-- Withdrawal Modal -->
+        <div id="withdrawalModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+            <div class="glassmorphism p-4 sm:p-6 rounded-lg w-11/12 sm:w-96 z-50">
+                <h3 class="text-xl font-semibold text-gray-300 mb-4">Withdraw Funds</h3>
+                <form method="POST" action="{{ url_for('withdraw') }}">
+                    <div class="mb-4">
+                        <label for="amount" class="block text-sm font-medium text-gray-300">Amount</label>
+                        <input type="number" step="0.01" id="amount" name="amount" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="closeWithdrawalModal()" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-500">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500">
+                            Withdraw
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Real-Time Stock Chart -->
+        <div class="glassmorphism p-4 sm:p-6 mb-8 hover-scale">
+            <h3 class="text-xl font-semibold text-gray-300 mb-4">Stock Performance</h3>
+            <div class="h-64 sm:h-80 md:h-96"> <!-- Responsive height -->
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Stocks Table -->
+        <div class="glassmorphism p-4 sm:p-6 mb-8 hover-scale overflow-x-auto">
+            <h3 class="text-xl font-semibold text-gray-300 mb-4">Your Stocks</h3>
+            <table class="min-w-full">
+                <thead class="bg-gray-800">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Stock Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Quantity</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Purchase Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Current Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Profit/Loss</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for investment in investments %}
+                        {% if investment.asset_type == 'Stock' %}
+                            <tr class="hover:bg-gray-700">
+                                <td class="px-4 py-4 text-sm text-gray-300">{{ investment.asset_name }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">{{ investment.quantity }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">₹{{ investment.price | round(2) }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">
+                                    {% if investment.current_value and investment.quantity %}
+                                        ₹{{ (investment.current_value / investment.quantity) | round(2) }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 text-sm {% if investment.profit_loss >= 0 %}text-green-400{% else %}text-red-400{% endif %}">
+                                    ₹{{ investment.profit_loss | round(2) }}
+                                </td>
+                                <td class="px-4 py-4 text-sm font-medium">
+                                    <a href="{{ url_for('sell', investment_id=investment._id) }}" class="text-blue-400 hover:text-blue-300">Sell</a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bonds Table -->
+        <div class="glassmorphism p-4 sm:p-6 mb-8 hover-scale overflow-x-auto">
+            <h3 class="text-xl font-semibold text-gray-300 mb-4">Your Bonds</h3>
+            <table class="min-w-full">
+                <thead class="bg-gray-800">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Bond Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Quantity</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Purchase Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Current Value</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for investment in investments %}
+                        {% if investment.asset_type == 'Bond' %}
+                            <tr class="hover:bg-gray-700">
+                                <td class="px-4 py-4 text-sm text-gray-300">{{ investment.asset_name }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">{{ investment.quantity }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">₹{{ investment.price | round(2) }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">
+                                    {% if investment.current_value %}
+                                        ₹{{ investment.current_value | round(2) }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 text-sm font-medium">
+                                    <a href="{{ url_for('sell_bond', investment_id=investment._id) }}" class="text-blue-400 hover:text-blue-300">Sell</a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Insurance Table -->
+        <div class="glassmorphism p-4 sm:p-6 mb-8 hover-scale overflow-x-auto">
+            <h3 class="text-xl font-semibold text-gray-300 mb-4">Your Insurance Policies</h3>
+            <table class="min-w-full">
+                <thead class="bg-gray-800">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Policy Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Premium Amount</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Coverage Amount</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Policy Term</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for investment in investments %}
+                        {% if investment.asset_type == 'Insurance' %}
+                            <tr class="hover:bg-gray-700">
+                                <td class="px-4 py-4 text-sm text-gray-300">{{ investment.asset_name }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">₹{{ investment.price | round(2) }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">₹{{ investment.total_price | round(2) }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-300">1 Year</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        const stockChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Stock Price',
+                    data: [100, 120, 110, 130, 125, 140],
+                    borderColor: '#60efff',
+                    borderWidth: 2,
+                    fill: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Function to open the withdrawal modal
+        function openWithdrawalModal() {
+            document.getElementById('withdrawalModal').classList.remove('hidden');
+        }
+
+        // Function to close the withdrawal modal
+        function closeWithdrawalModal() {
+            document.getElementById('withdrawalModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

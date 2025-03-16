@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floating Chatbot</title>
+    <style>
+        /* General body styling */
+        body {
+            background: linear-gradient(135deg, #1a1a1a, #2c3e50);
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            height: 100vh;
+            /* overflow: hidden; */
+        }
+
+        /* Floating chatbot button */
+        .chatbot-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #00ffff, #00ffaa);
+    border: none;
+    color: #000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure the button is always on top */
+}
+
+/* Chat container (hidden by default) */
+.chat-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 450px;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    border: 2px solid #00ffff;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000; /* Ensure the chat container is always on top */
+}
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 1);
+        }
+
+        .chatbot-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+
+
+        /* Show chat container when active */
+        .chat-container.active {
+            display: flex;
+        }
+
+        /* Chat header */
+        .chat-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 2px solid #00ffff;
+        }
+
+        /* Chat messages area */
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Chat bubbles */
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .user-message {
+            background: #00ffff;
+            color: #000;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background: #333;
+            color: #fff;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        /* Input area */
+        .chat-input {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 2px solid #00ffff;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating chatbot button -->
+    <button class="chatbot-button" id="chatbotButton">🎤</button>
+
+    <!-- Chat container -->
+    <div class="chat-container" id="chatContainer">
+        <!-- Chat header -->
+        <div class="chat-header">
+            Voice Command Chatbot
+        </div>
+
+        <!-- Chat messages area -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be dynamically added here -->
+        </div>
+
+        <!-- Input area -->
+        <div class="chat-input">
+            <button id="recordButton">🎤 Speak</button>
+        </div>
+    </div>
+
+    <script>
+        const chatbotButton = document.getElementById('chatbotButton');
+        const chatContainer = document.getElementById('chatContainer');
+        const recordButton = document.getElementById('recordButton');
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Toggle chat container visibility
+        chatbotButton.addEventListener('click', () => {
+            chatContainer.classList.toggle('active');
+        });
+
+        // Speech recognition logic
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recordButton.addEventListener('click', () => {
+                recognition.start();
+                addMessage("Listening...", "bot");
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                addMessage(`You: ${transcript}`, "user");
+
+                // Send the transcript to your backend for processing
+                fetch('/voice-command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: transcript }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage(`Bot: ${data.response}`, "bot");
+                })
+                .catch(() => {
+                    addMessage("Bot: Error processing command.", "bot");
+                });
+            };
+
+            recognition.onerror = (event) => {
+                addMessage(`Bot: Error - ${event.error}`, "bot");
+            };
+        } else {
+            addMessage("Bot: Speech recognition not supported in this browser.", "bot");
+        }
+
+        // Function to add a message to the chat
+        function addMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(sender === "user" ? "user-message" : "bot-message");
+            messageElement.textContent = text;
+            chatMessages.appendChild(messageElement);
+
+            // Scroll to the bottom of the chat
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
